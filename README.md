@@ -1,8 +1,8 @@
 # 年間休日計算サイト
 
-[https://nenkyu.vercel.app/](https://nenkyu.vercel.app/)
+[https://nenkyu.vercel.app/](https://nenkyu.vercel.app/)<br>
 
-<img src="https://github.com/user-attachments/assets/3628feee-f2d6-4b93-908b-9c4da82643ac" width="50%">
+<img src="https://github.com/user-attachments/assets/3628feee-f2d6-4b93-908b-9c4da82643ac" width="70%"><br>
 
 ## 概要 (Overview)
 
