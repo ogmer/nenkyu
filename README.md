@@ -2,7 +2,7 @@
 
 [https://nenkyu.vercel.app/](https://nenkyu.vercel.app/)
 
-![スクリーンショット 2025-03-11 165707](https://github.com/user-attachments/assets/3628feee-f2d6-4b93-908b-9c4da82643ac)
+![スクリーンショット 2025-03-11 165707](https://github.com/user-attachments/assets/3628feee-f2d6-4b93-908b-9c4da82643ac width="50%")
 
 ## 概要 (Overview)
 
