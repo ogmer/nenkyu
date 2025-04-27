@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button"
 
 export const metadata = {
   title: "このツールについて | 年間休日計算ツール",
-  description:
-    "年間休日計算ツールの使い方と計算方法について詳しく説明します。週の勤務日数、祝日数、年末年始休暇、夏季休暇から年間休日数を簡単に計算できます。",
-  keywords: ["年間休日計算", "休日計算方法", "勤務日数", "祝日", "年末年始休暇", "夏季休暇", "休日数計算ツール"],
+  description: "年間休日計算ツールの使い方と計算方法について詳しく説明します。",
 }
 
 export default function AboutPage() {
