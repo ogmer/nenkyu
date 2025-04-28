@@ -2,14 +2,19 @@
 
 [https://nenkyu.vercel.app/](https://nenkyu.vercel.app/)<br>
 
-<img src="https://github.com/user-attachments/assets/f4d14754-c5ee-4c95-926f-ffefa83e632f" width="60%"><br>
+# 年間休日計算ツール
 
-## 概要
+勤務日数と休日から年間の休日数を簡単に計算できるウェブアプリケーションです。
 
-年間休日計算ツールは、日本の勤務体系における年間休日数を簡単に計算できるウェブアプリケーションです。ユーザーは勤務日数や各種休暇日数を入力することで、年間の休日数を自動計算できます。企業の年間休日数の確認や、転職先の休日数の比較などにご活用いただけます。
+## 機能
+
+- 週の勤務日数設定
+- 祝日数、年末年始休暇、夏季休暇、特別休暇の入力
+- 休日出勤日数の考慮
+- 年間休日数の自動計算
 
 ## 技術スタック
 
-- [Next.js](https://nextjs.org/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
+- Next.js
+- TypeScript
+- TailwindCSS

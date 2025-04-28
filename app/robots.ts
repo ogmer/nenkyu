@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next"
 
-// 静的エクスポート用の設定を追加
+// 静的エクスポート用の設定
 export const dynamic = "force-static"
 
 export default function robots(): MetadataRoute.Robots {
@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://your-domain.com/sitemap.xml",
+    sitemap: "https://nenkyu.vercel.app/sitemap.xml",
   }
 }

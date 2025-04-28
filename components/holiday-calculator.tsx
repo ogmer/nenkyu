@@ -1,64 +1,53 @@
 "use client"
 import { Calendar } from "lucide-react"
-import type React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { useLocalStorage } from "@/hooks/use-local-storage"
 import { SocialShare } from "./social-share"
-import { useMemo, useState, useEffect, useCallback } from "react"
-
-// Custom hook to handle input values that can be empty strings
-function useNumberInput(key: string, initialValue: number) {
-  const [value, setValue] = useLocalStorage<string | number>(key, initialValue)
-  const [localValue, setLocalValue] = useState(initialValue.toString())
-
-  useEffect(() => {
-    if (typeof value === "number") {
-      setLocalValue(value.toString())
-    } else if (typeof value === "string") {
-      setLocalValue(value)
-    }
-  }, [value])
-
-  // Convert to number for calculations (empty string becomes 0)
-  const numericValue = localValue === "" ? 0 : Number(localValue)
-
-  return [localValue, numericValue, setValue] as const
-}
+import { useMemo, useCallback } from "react"
+import { useLocalStorage } from "@/hooks/use-local-storage"
 
 export function HolidayCalculator() {
-  // Use localStorage to persist user inputs
-  const [workingDays, setWorkingDays] = useLocalStorage("workingDays", 5)
-  const [nationalHolidays, nationalHolidaysNum, setNationalHolidays] = useNumberInput("nationalHolidays", 14)
-  const [yearEndHolidays, yearEndHolidaysNum, setYearEndHolidays] = useNumberInput("yearEndHolidays", 5)
-  const [summerHolidays, summerHolidaysNum, setSummerHolidays] = useNumberInput("summerHolidays", 3)
-  const [specialHolidays, specialHolidaysNum, setSpecialHolidays] = useNumberInput("specialHolidays", 0)
-  const [overtimeWorkDays, overtimeWorkDaysNum, setOvertimeWorkDays] = useNumberInput("overtimeWorkDays", 0)
+  // カスタムフックを使用して各値を管理
+  const { value: workingDays, setValue: setWorkingDays } = useLocalStorage<number>("workingDays", 5)
+  const { value: nationalHolidays, setValue: setNationalHolidays } = useLocalStorage<string>("nationalHolidays", "14")
+  const { value: yearEndHolidays, setValue: setYearEndHolidays } = useLocalStorage<string>("yearEndHolidays", "5")
+  const { value: summerHolidays, setValue: setSummerHolidays } = useLocalStorage<string>("summerHolidays", "3")
+  const { value: specialHolidays, setValue: setSpecialHolidays } = useLocalStorage<string>("specialHolidays", "0")
+  const { value: overtimeWorkDays, setValue: setOvertimeWorkDays } = useLocalStorage<string>("overtimeWorkDays", "0")
 
-  // Memoize the calculation to avoid unnecessary recalculations
-  const annualHolidays = useMemo(() => {
-    // 週末の日数を計算
-    const weekendDays = 52 * (7 - workingDays)
+  // 勤務日数の変更ハンドラ
+  const handleWorkingDaysChange = useCallback(
+    (value: string) => {
+      setWorkingDays(Number.parseInt(value, 10))
+    },
+    [setWorkingDays],
+  )
 
-    // 祝日と各種休暇の合計 (重複を考慮しない簡易計算)
-    const totalSpecialHolidays = nationalHolidaysNum + yearEndHolidaysNum + summerHolidaysNum + specialHolidaysNum
-
-    // 年間休日 = 週末 + 祝日 + 各種休暇 - 休日出勤日数
-    return weekendDays + totalSpecialHolidays - overtimeWorkDaysNum
-  }, [workingDays, nationalHolidaysNum, yearEndHolidaysNum, summerHolidaysNum, specialHolidaysNum, overtimeWorkDaysNum])
-
-  // Handler for number input changes - メモ化して再レンダリングを減らす
-  const handleInputChange = useCallback((setter: (value: string) => void, e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-
-    // Allow empty string or valid numbers
+  // テキスト入力の変更ハンドラ
+  const handleInputChange = useCallback((setter: (value: string) => void, value: string) => {
     if (value === "" || /^\d*$/.test(value)) {
       setter(value)
     }
   }, [])
+
+  // 数値変換関数
+  const toNumber = useCallback((value: string) => (value === "" ? 0 : Number.parseInt(value, 10)), [])
+
+  // 年間休日数の計算
+  const annualHolidays = useMemo(() => {
+    // 週末の日数を計算
+    const weekendDays = 52 * (7 - workingDays)
+
+    // 祝日と各種休暇の合計
+    const totalSpecialHolidays =
+      toNumber(nationalHolidays) + toNumber(yearEndHolidays) + toNumber(summerHolidays) + toNumber(specialHolidays)
+
+    // 年間休日 = 週末 + 祝日 + 各種休暇 - 休日出勤日数
+    return weekendDays + totalSpecialHolidays - toNumber(overtimeWorkDays)
+  }, [workingDays, nationalHolidays, yearEndHolidays, summerHolidays, specialHolidays, overtimeWorkDays, toNumber])
 
   return (
     <Card className="shadow-lg">
@@ -73,7 +62,7 @@ export function HolidayCalculator() {
         <div className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="workingDays">週の勤務日数</Label>
-            <Select value={workingDays.toString()} onValueChange={(value) => setWorkingDays(Number.parseInt(value))}>
+            <Select value={String(workingDays)} onValueChange={handleWorkingDaysChange}>
               <SelectTrigger id="workingDays">
                 <SelectValue placeholder="週の勤務日数を選択" />
               </SelectTrigger>
@@ -93,7 +82,7 @@ export function HolidayCalculator() {
               type="text"
               inputMode="numeric"
               value={nationalHolidays}
-              onChange={(e) => handleInputChange(setNationalHolidays, e)}
+              onChange={(e) => handleInputChange(setNationalHolidays, e.target.value)}
               placeholder="0"
               aria-describedby="nationalHolidays-hint"
             />
@@ -109,7 +98,7 @@ export function HolidayCalculator() {
               type="text"
               inputMode="numeric"
               value={yearEndHolidays}
-              onChange={(e) => handleInputChange(setYearEndHolidays, e)}
+              onChange={(e) => handleInputChange(setYearEndHolidays, e.target.value)}
               placeholder="0"
               aria-describedby="yearEndHolidays-hint"
             />
@@ -125,7 +114,7 @@ export function HolidayCalculator() {
               type="text"
               inputMode="numeric"
               value={summerHolidays}
-              onChange={(e) => handleInputChange(setSummerHolidays, e)}
+              onChange={(e) => handleInputChange(setSummerHolidays, e.target.value)}
               placeholder="0"
               aria-describedby="summerHolidays-hint"
             />
@@ -141,7 +130,7 @@ export function HolidayCalculator() {
               type="text"
               inputMode="numeric"
               value={specialHolidays}
-              onChange={(e) => handleInputChange(setSpecialHolidays, e)}
+              onChange={(e) => handleInputChange(setSpecialHolidays, e.target.value)}
               placeholder="0"
               aria-describedby="specialHolidays-hint"
             />
@@ -157,7 +146,7 @@ export function HolidayCalculator() {
               type="text"
               inputMode="numeric"
               value={overtimeWorkDays}
-              onChange={(e) => handleInputChange(setOvertimeWorkDays, e)}
+              onChange={(e) => handleInputChange(setOvertimeWorkDays, e.target.value)}
               placeholder="0"
               aria-describedby="overtimeWorkDays-hint"
             />

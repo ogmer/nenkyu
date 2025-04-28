@@ -1,49 +1,40 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
-  // State to store our value
-  const [storedValue, setStoredValue] = useState<T>(initialValue)
-
-  // Initialize on first render only
-  useEffect(() => {
-    if (typeof window === "undefined") return
+  // 初期値を同期的に取得する関数
+  const getInitialValue = (): T => {
+    // ブラウザ環境でない場合は初期値を返す
+    if (typeof window === "undefined") {
+      return initialValue
+    }
 
     try {
-      // Get from local storage by key
+      // ローカルストレージから値を取得
       const item = window.localStorage.getItem(key)
-      // Parse stored json or if none return initialValue
-      const value = item ? JSON.parse(item) : initialValue
-      setStoredValue(value)
+      // 値が存在する場合はパースして返す、存在しない場合は初期値を返す
+      return item ? JSON.parse(item) : initialValue
     } catch (error) {
-      // If error also return initialValue
+      // エラーが発生した場合は初期値を返す
       console.error("Error reading from localStorage:", error)
-      setStoredValue(initialValue)
+      return initialValue
     }
-  }, [key, initialValue])
+  }
 
-  // Return a wrapped version of useState's setter function that
-  // persists the new value to localStorage.
-  const setValue = useCallback(
-    (value: T | ((val: T) => T)) => {
+  // 状態を初期化（同期的に初期値を設定）
+  const [value, setValue] = useState<T>(getInitialValue)
+
+  // 値が変更されたらローカルストレージに保存
+  useEffect(() => {
+    if (typeof window !== "undefined") {
       try {
-        // Allow value to be a function so we have same API as useState
-        const valueToStore = value instanceof Function ? value(storedValue) : value
-
-        // Save state
-        setStoredValue(valueToStore)
-
-        // Save to local storage
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem(key, JSON.stringify(valueToStore))
-        }
+        window.localStorage.setItem(key, JSON.stringify(value))
       } catch (error) {
-        console.error("Error writing to localStorage:", error)
+        console.error("Error saving to localStorage:", error)
       }
-    },
-    [key, storedValue],
-  )
+    }
+  }, [key, value])
 
-  return [storedValue, setValue] as const
+  return { value, setValue }
 }
