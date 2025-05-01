@@ -18,3 +18,25 @@
 - Next.js
 - TypeScript
 - TailwindCSS
+
+<br>
+# Annual holiday calculation website
+
+[https://nenkyu.vercel.app/](https://nenkyu.vercel.app/)<br>
+
+# Annual holiday calculation tool
+
+Web application to easily calculate the number of annual holidays based on the number of working days and holidays
+
+## Functions
+
+- Set number of working days per week
+- Entering the number of public holidays, New Year holidays, summer holidays and special holidays
+- Factoring in the number of days worked on holidays
+- Automatic calculation of the number of holidays per year
+
+## Technology stack
+
+- Next.js
+- TypeScript
+- TailwindCSS
