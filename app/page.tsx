@@ -8,12 +8,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar, Share } from "lucide-react"
 import Link from "next/link"
-import dynamic from "next/dynamic"
-
-const TwitterShareButton = dynamic(() => import("@/components/twitter-share-button"), {
-  loading: () => <Button disabled>読み込み中...</Button>,
-  ssr: false,
-})
 
 export default function HolidayCalculator() {
   const [workingDaysPerWeek, setWorkingDaysPerWeek] = useState("5")
@@ -93,39 +87,6 @@ export default function HolidayCalculator() {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "年間休日計算ツール",
-            description: "勤務日数と休日から年間の休日数を簡単に計算できるWebアプリケーション",
-            url: "https://annual-holiday-calculator.vercel.app",
-            applicationCategory: "BusinessApplication",
-            operatingSystem: "Any",
-            offers: {
-              "@type": "Offer",
-              price: "0",
-              priceCurrency: "JPY",
-            },
-            creator: {
-              "@type": "Organization",
-              name: "年間休日計算ツール",
-            },
-            datePublished: "2025-01-01",
-            inLanguage: "ja-JP",
-            keywords: "年間休日, 休日計算, 勤務日数, 祝日, 計算ツール, 無料",
-            featureList: [
-              "週の勤務日数から自動計算",
-              "祝日数の自動取得",
-              "年末年始・夏季休暇の設定",
-              "Twitter共有機能",
-              "土日重複祝日の除外",
-            ],
-          }),
-        }}
-      />
       <div className="min-h-screen bg-gray-50 py-8 px-4">
         <div className="max-w-2xl mx-auto">
           <header className="text-center mb-8">
