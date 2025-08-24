@@ -5,7 +5,7 @@ import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "年間休日計算ツール | 勤務日数から年間休日数を自動計算",
+  title: "年間休日計算ツール",
   description:
     "勤務日数と各種休暇から年間の休日数を簡単に計算できる無料ツールです。祝日数は自動取得され、土日の重複も考慮した正確な計算を行います。",
   keywords: ["年間休日", "休日計算", "勤務日数", "祝日", "年末年始", "夏季休暇", "計算ツール"],
