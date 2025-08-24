@@ -125,7 +125,7 @@ export default function HolidayCalculator() {
               <p className="text-xs text-gray-500">
                 {isLoadingHolidays
                   ? "祝日データを取得中..."
-                  : "平日の祝日数が自動設定されています（土日重複分は除外済み）"}
+                  : "今年の平日の祝日数が設定されています（土日重複分は除外済み）"}
               </p>
             </div>
 
@@ -138,7 +138,7 @@ export default function HolidayCalculator() {
                 onChange={(e) => setYearEndHolidays(e.target.value)}
                 className="w-full"
               />
-              <p className="text-xs text-gray-500">12月29日～1月3日の場合は6日など（元旦を除き5日）</p>
+              <p className="text-xs text-gray-500">12月29日～1月3日の場合は5日など（元旦を除く）</p>
             </div>
 
             <div className="space-y-2">
