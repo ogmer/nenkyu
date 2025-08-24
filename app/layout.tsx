@@ -8,6 +8,12 @@ export const metadata: Metadata = {
   title: "年間休日計算ツール",
   description: "勤務日数と休日から年間の休日数を簡単に計算できます",
   generator: "v0.app",
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/svg+xml" },
+      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
+    ],
+  },
 }
 
 export default function RootLayout({
