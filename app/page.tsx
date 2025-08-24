@@ -33,7 +33,7 @@ export default function HolidayCalculator() {
   const totalHolidays = calculateAnnualHolidays()
 
   const shareOnTwitter = () => {
-    const text = `私の年間休日数は${totalHolidays}日でした！ #年間休日計算ツール`
+    const text = `私の年間休日数は${totalHolidays}日でした！\n#年間休日計算ツール\n`
     const url = window.location.href
     window.open(
       `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
