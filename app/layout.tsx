@@ -1,19 +1,16 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "年間休日計算ツール",
+  title: "年間休日計算ツール | 勤務日数から年間休日数を自動計算",
   description:
     "勤務日数と各種休暇から年間の休日数を簡単に計算できる無料ツールです。祝日数は自動取得され、土日の重複も考慮した正確な計算を行います。",
   keywords: ["年間休日", "休日計算", "勤務日数", "祝日", "年末年始", "夏季休暇", "計算ツール"],
   authors: [{ name: "年間休日計算ツール" }],
   creator: "年間休日計算ツール",
-  publisher: "年間休日計算ツール",
   robots: "index, follow",
-  generator: "v0.app",
   metadataBase: new URL("https://annual-holiday-calculator.vercel.app"),
   alternates: {
     canonical: "/",
@@ -45,6 +42,7 @@ export const metadata: Metadata = {
     icon: [{ url: "/favicon.png", type: "image/png", sizes: "32x32" }],
     apple: [{ url: "/favicon.png", sizes: "32x32", type: "image/png" }],
   },
+    generator: 'v0.app'
 }
 
 export default function RootLayout({
@@ -53,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ja" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html lang="ja" className={GeistSans.variable}>
       <head>
         <link
           rel="preload"
@@ -62,14 +60,6 @@ export default function RootLayout({
           type="font/woff2"
           crossOrigin="anonymous"
         />
-        <style>{`
-          html {
-            font-family: ${GeistSans.style.fontFamily};
-            --font-sans: ${GeistSans.variable};
-            --font-mono: ${GeistMono.variable};
-            font-display: swap;
-          }
-        `}</style>
       </head>
       <body className="font-sans antialiased">{children}</body>
     </html>
