@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +16,11 @@ export default function HolidayCalculator() {
   const [summerHolidays, setSummerHolidays] = useState("3")
   const [specialHolidays, setSpecialHolidays] = useState("0")
   const [workingOnHolidays, setWorkingOnHolidays] = useState("0")
+  const [isLoadingHolidays, setIsLoadingHolidays] = useState(false)
+
+  useEffect(() => {
+    fetchHolidays()
+  }, [])
 
   const calculateAnnualHolidays = () => {
     const workDays = Number.parseInt(workingDaysPerWeek)
@@ -28,6 +33,41 @@ export default function HolidayCalculator() {
     const workingOnHolidaysDays = Number.parseInt(workingOnHolidays)
 
     return weekendsPerYear + holidays - workingOnHolidaysDays
+  }
+
+  const fetchHolidays = async () => {
+    setIsLoadingHolidays(true)
+    try {
+      const currentYear = new Date().getFullYear()
+      const response = await fetch(`https://holidays-jp.github.io/api/v1/${currentYear}/date.json`)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const holidaysData = await response.json()
+
+      // 土日と重複しない祝日のみをカウント
+      let weekdayHolidays = 0
+      for (const dateString in holidaysData) {
+        const date = new Date(dateString)
+        const dayOfWeek = date.getDay() // 0=日曜, 6=土曜
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          weekdayHolidays++
+        }
+      }
+
+      if (weekdayHolidays > 0) {
+        setNationalHolidays(weekdayHolidays.toString())
+      } else {
+        setNationalHolidays("14") // 平日祝日の平均値
+      }
+    } catch (error) {
+      console.error("祝日データの取得に失敗しました:", error)
+      setNationalHolidays("14") // 平日祝日の平均値
+    } finally {
+      setIsLoadingHolidays(false)
+    }
   }
 
   const totalHolidays = calculateAnnualHolidays()
@@ -82,7 +122,11 @@ export default function HolidayCalculator() {
                 onChange={(e) => setNationalHolidays(e.target.value)}
                 className="w-full"
               />
-              <p className="text-xs text-gray-500">日本の祝日は平均16日です（土曜の重なりが2日程度）</p>
+              <p className="text-xs text-gray-500">
+                {isLoadingHolidays
+                  ? "祝日データを取得中..."
+                  : "平日の祝日数が自動設定されています（土日重複分は除外済み）"}
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -118,7 +162,6 @@ export default function HolidayCalculator() {
                 onChange={(e) => setSpecialHolidays(e.target.value)}
                 className="w-full"
               />
-              <p className="text-xs text-gray-500">創立記念日など、その他の特別休暇</p>
             </div>
 
             <div className="space-y-2">
