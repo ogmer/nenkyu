@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,6 +8,12 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar, Share } from "lucide-react"
 import Link from "next/link"
+import dynamic from "next/dynamic"
+
+const TwitterShareButton = dynamic(() => import("@/components/twitter-share-button"), {
+  loading: () => <Button disabled>読み込み中...</Button>,
+  ssr: false,
+})
 
 export default function HolidayCalculator() {
   const [workingDaysPerWeek, setWorkingDaysPerWeek] = useState("5")
@@ -18,11 +24,7 @@ export default function HolidayCalculator() {
   const [workingOnHolidays, setWorkingOnHolidays] = useState("0")
   const [isLoadingHolidays, setIsLoadingHolidays] = useState(false)
 
-  useEffect(() => {
-    fetchHolidays()
-  }, [])
-
-  const calculateAnnualHolidays = () => {
+  const totalHolidays = useMemo(() => {
     const workDays = Number.parseInt(workingDaysPerWeek)
     const weekendsPerYear = (7 - workDays) * 52
     const holidays =
@@ -33,13 +35,16 @@ export default function HolidayCalculator() {
     const workingOnHolidaysDays = Number.parseInt(workingOnHolidays)
 
     return weekendsPerYear + holidays - workingOnHolidaysDays
-  }
+  }, [workingDaysPerWeek, nationalHolidays, yearEndHolidays, summerHolidays, specialHolidays, workingOnHolidays])
 
-  const fetchHolidays = async () => {
+  const fetchHolidays = useCallback(async () => {
     setIsLoadingHolidays(true)
     try {
       const currentYear = new Date().getFullYear()
-      const response = await fetch(`https://holidays-jp.github.io/api/v1/${currentYear}/date.json`)
+      const response = await fetch(`https://holidays-jp.github.io/api/v1/${currentYear}/date.json`, {
+        cache: "force-cache",
+        next: { revalidate: 86400 }, // 24時間キャッシュ
+      })
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -47,11 +52,10 @@ export default function HolidayCalculator() {
 
       const holidaysData = await response.json()
 
-      // 土日と重複しない祝日のみをカウント
       let weekdayHolidays = 0
       for (const dateString in holidaysData) {
         const date = new Date(dateString)
-        const dayOfWeek = date.getDay() // 0=日曜, 6=土曜
+        const dayOfWeek = date.getDay()
         if (dayOfWeek !== 0 && dayOfWeek !== 6) {
           weekdayHolidays++
         }
@@ -60,26 +64,32 @@ export default function HolidayCalculator() {
       if (weekdayHolidays > 0) {
         setNationalHolidays(weekdayHolidays.toString())
       } else {
-        setNationalHolidays("14") // 平日祝日の平均値
+        setNationalHolidays("14")
       }
     } catch (error) {
       console.error("祝日データの取得に失敗しました:", error)
-      setNationalHolidays("14") // 平日祝日の平均値
+      setNationalHolidays("14")
     } finally {
       setIsLoadingHolidays(false)
     }
-  }
+  }, [])
 
-  const totalHolidays = calculateAnnualHolidays()
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchHolidays()
+    }, 100)
 
-  const shareOnTwitter = () => {
+    return () => clearTimeout(timer)
+  }, [fetchHolidays])
+
+  const shareOnTwitter = useCallback(() => {
     const text = `私の年間休日数は${totalHolidays}日でした！\n#年間休日計算ツール\n`
     const url = window.location.href
     window.open(
       `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
       "_blank",
     )
-  }
+  }, [totalHolidays])
 
   return (
     <>
@@ -126,7 +136,7 @@ export default function HolidayCalculator() {
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-500" />
+                <Calendar className="w-5 h-5 text-blue-500 flex-shrink-0" />
                 年間休日計算
               </CardTitle>
               <p className="text-sm text-gray-600">勤務日数と休日から年間の休日数を計算します</p>

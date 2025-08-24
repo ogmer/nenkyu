@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://annual-holiday-calculator.vercel.app/sitemap.xml
+Sitemap: https://nenkyu.vercel.app/sitemap.xml

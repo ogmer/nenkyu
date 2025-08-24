@@ -53,17 +53,25 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ja">
+    <html lang="ja" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <head>
+        <link
+          rel="preload"
+          href="/_next/static/media/geist-sans.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         <style>{`
-html {
-  font-family: ${GeistSans.style.fontFamily};
-  --font-sans: ${GeistSans.variable};
-  --font-mono: ${GeistMono.variable};
-}
+          html {
+            font-family: ${GeistSans.style.fontFamily};
+            --font-sans: ${GeistSans.variable};
+            --font-mono: ${GeistMono.variable};
+            font-display: swap;
+          }
         `}</style>
       </head>
-      <body>{children}</body>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   )
 }
