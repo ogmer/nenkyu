@@ -1,30 +1,79 @@
-# Annual leave calculator
+# 年間休日計算ツール
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+勤務日数と各種休日から年間の休日数を簡単に計算できるWebアプリケーションです。企業の年間休日数の確認や、転職先の休日数の比較などにご活用いただけます。
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/ogmers-projects/v0-annual-leave-calculator)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/ecvkehp5wq1)
+## 🚀 機能
 
-## Overview
+- **年間休日計算**: 週の勤務日数と各種休日から自動計算
+- **詳細設定**: 祝日数、年末年始休暇、夏季休暇、特別休暇を個別に設定可能
+- **Twitterシェア**: 計算結果をTwitterで簡単にシェア
+- **レスポンシブデザイン**: モバイル・デスクトップ両対応
+- **詳細説明ページ**: 計算方法と注意事項の詳細解説
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## 🛠️ 技術スタック
 
-## Deployment
+- **Next.js 14** - React フレームワーク（App Router使用）
+- **TypeScript** - 型安全性の確保
+- **Tailwind CSS** - スタイリング
+- **shadcn/ui** - UIコンポーネントライブラリ
+- **Lucide React** - アイコンライブラリ
 
-Your project is live at:
+## 📊 計算方法
 
-**[https://vercel.com/ogmers-projects/v0-annual-leave-calculator](https://vercel.com/ogmers-projects/v0-annual-leave-calculator)**
+年間休日数は以下の計算式で算出されます：
 
-## Build your app
+\`\`\`
+年間休日数 = 週末の日数 + 祝日数 + 年末年始休暇 + 夏季休暇 + 特別休暇 - 休日出勤日数
+\`\`\`
 
-Continue building your app on:
+週末の日数は、週の勤務日数から自動計算されます（例：週5日勤務の場合、週末は2日×52週=104日）。
 
-**[https://v0.app/chat/projects/ecvkehp5wq1](https://v0.app/chat/projects/ecvkehp5wq1)**
+## 🎯 使用方法
 
-## How It Works
+1. **週の勤務日数**を選択（5日、6日、4日、3日から選択）
+2. **祝日数**を入力（日本の祝日は平均16日）
+3. **年末年始休暇**日数を入力
+4. **夏季休暇**日数を入力（お盆休みなど）
+5. **特別休暇**日数を入力（創立記念日など）
+6. **休日出勤日数**を入力
+7. 自動計算された年間休日数を確認
+8. 必要に応じてTwitterでシェア
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## 🚀 開発・デプロイ
+
+### 開発環境の起動
+
+\`\`\`bash
+npm run dev
+# または
+yarn dev
+# または
+pnpm dev
+\`\`\`
+
+ブラウザで [http://localhost:3000](http://localhost:3000) を開いて確認できます。
+
+### ビルド
+
+\`\`\`bash
+npm run build
+\`\`\`
+
+### Vercelでのデプロイ
+
+このプロジェクトはVercelでの簡単デプロイに最適化されています。
+
+## ⚠️ 注意事項
+
+- この計算は簡易的なものです
+- 祝日が週末と重なる場合や振替休日は考慮していません
+- より正確な計算には、実際のカレンダーを参照してください
+- 入力したデータはお使いのブラウザに保存されます
+
+## 📝 ライセンス
+
+© 2025 年間休日計算ツール
+
+## 🤝 貢献
+
+プルリクエストやイシューの報告を歓迎します。改善提案がございましたら、お気軽にお知らせください。
