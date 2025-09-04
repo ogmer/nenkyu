@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
+import Script from "next/script"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -61,8 +62,22 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      
+
       <body className="font-sans antialiased">
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-NNRS9GPGQX"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-NNRS9GPGQX');
+          `}
+        </Script>
+
         {children}
       </body>
     </html>
