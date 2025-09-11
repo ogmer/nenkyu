@@ -56,6 +56,21 @@ export default function AboutPage() {
             </div>
           </section>
 
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">お問い合わせ</h2>
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <p className="text-gray-700 mb-4">
+                ツールに関するご質問やご要望がございましたら、お気軽にお問い合わせください。
+              </p>
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-600">連絡先:</span>
+                <a href="mailto:ogmer.net@gmail.com" className="text-blue-600 hover:text-blue-800 underline">
+                  ogmer.net@gmail.com
+                </a>
+              </div>
+            </div>
+          </section>
+
           <div className="text-center pt-8">
             <Link href="/">
               <Button className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2">計算ツールに戻る</Button>

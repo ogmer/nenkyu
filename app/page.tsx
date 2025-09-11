@@ -17,6 +17,7 @@ export default function HolidayCalculator() {
   const [specialHolidays, setSpecialHolidays] = useState("0")
   const [workingOnHolidays, setWorkingOnHolidays] = useState("0")
   const [isLoadingHolidays, setIsLoadingHolidays] = useState(false)
+  const [holidayError, setHolidayError] = useState(false)
 
   const totalHolidays = useMemo(() => {
     const workDays = Number.parseInt(workingDaysPerWeek)
@@ -33,9 +34,21 @@ export default function HolidayCalculator() {
 
   const fetchHolidays = useCallback(async () => {
     setIsLoadingHolidays(true)
+    setHolidayError(false)
     try {
       const currentYear = new Date().getFullYear()
-      const response = await fetch(`https://holidays-jp.github.io/api/v1/${currentYear}/date.json`)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒でタイムアウト
+
+      const response = await fetch(`https://holidays-jp.github.io/api/v1/${currentYear}/date.json`, {
+        signal: controller.signal,
+        mode: "cors",
+        headers: {
+          Accept: "application/json",
+        },
+      })
+
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -55,21 +68,33 @@ export default function HolidayCalculator() {
       setNationalHolidays(weekdayHolidays > 0 ? weekdayHolidays.toString() : "14")
     } catch (error) {
       console.error("祝日データの取得に失敗しました:", error)
-      setNationalHolidays("14")
+      setHolidayError(true)
+      setNationalHolidays("16") // 2025年の平日祝日数
     } finally {
       setIsLoadingHolidays(false)
     }
   }, [])
 
   useEffect(() => {
-    fetchHolidays()
-  }, [fetchHolidays])
+    if (typeof window !== "undefined") {
+      fetchHolidays()
+    }
+  }, [])
 
   const shareOnTwitter = useCallback(() => {
     const text = `私の年間休日数は${totalHolidays}日でした！\n#年間休日計算ツール\n`
     const url = window.location.href
     window.open(
       `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+      "_blank",
+    )
+  }, [totalHolidays])
+
+  const shareOnFacebook = useCallback(() => {
+    const text = `私の年間休日数は${totalHolidays}日でした！`
+    const url = window.location.href
+    window.open(
+      `https://www.facebook.com/dialog/share?app_id=966242223397117&href=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}&hashtag=${encodeURIComponent("#年間休日計算ツール")}`,
       "_blank",
     )
   }, [totalHolidays])
@@ -87,7 +112,7 @@ export default function HolidayCalculator() {
       price: "0",
       priceCurrency: "JPY",
     },
-    featureList: ["年間休日計算", "祝日自動取得", "Twitterシェア", "レスポンシブデザイン"],
+    featureList: ["年間休日計算", "祝日自動取得", "Twitterシェア", "Facebookシェア", "レスポンシブデザイン"],
   }
 
   return (
@@ -138,7 +163,9 @@ export default function HolidayCalculator() {
                   <p id="national-holidays-help" className="text-xs text-gray-500">
                     {isLoadingHolidays
                       ? "祝日データを取得中..."
-                      : "今年の平日の祝日数が設定されています（土日重複分は除外済み）"}
+                      : holidayError
+                        ? "祝日データの取得に失敗しました。標準値（16日）を設定しています"
+                        : "今年の平日の祝日数が設定されています（土日重複分は除外済み）"}
                   </p>
                 </div>
 
@@ -214,10 +241,16 @@ export default function HolidayCalculator() {
                     {totalHolidays}日
                   </div>
                   <p className="text-sm text-gray-600 mb-4">結果をシェアする:</p>
-                  <Button onClick={shareOnTwitter} className="bg-blue-500 hover:bg-blue-600">
-                    <Share className="w-4 h-4 mr-2" />
-                    Twitterでシェア
-                  </Button>
+                  <div className="flex gap-3 justify-center">
+                    <Button onClick={shareOnTwitter} className="bg-blue-500 hover:bg-blue-600">
+                      <Share className="w-4 h-4 mr-2" />
+                      Twitterでシェア
+                    </Button>
+                    <Button onClick={shareOnFacebook} className="bg-blue-700 hover:bg-blue-800">
+                      <Share className="w-4 h-4 mr-2" />
+                      Facebookでシェア
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
