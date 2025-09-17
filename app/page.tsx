@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, memo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +22,85 @@ const validateInput = (value: string, min = 0, max = 365): boolean => {
   const numValue = Number.parseInt(value)
   return !isNaN(numValue) && numValue >= min && numValue <= max
 }
+
+const MemoizedInput = memo(
+  ({
+    id,
+    value,
+    onChange,
+    onKeyDown,
+    min = "0",
+    max = "365",
+    helpText,
+    label,
+    nextFieldId,
+  }: {
+    id: string
+    value: string
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+    onKeyDown: (e: React.KeyboardEvent, nextFieldId?: string) => void
+    min?: string
+    max?: string
+    helpText: string
+    label: string
+    nextFieldId?: string
+  }) => (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type="number"
+        min={min}
+        max={max}
+        value={value}
+        onChange={onChange}
+        onKeyDown={(e) => onKeyDown(e, nextFieldId)}
+        className={`w-full ${!validateInput(value, Number.parseInt(min), Number.parseInt(max)) ? "border-red-500" : ""}`}
+        aria-describedby={`${id}-help`}
+        aria-invalid={!validateInput(value, Number.parseInt(min), Number.parseInt(max))}
+        aria-required={id === "national-holidays"}
+      />
+      <p id={`${id}-help`} className="text-xs text-gray-500">
+        {helpText}
+      </p>
+    </div>
+  ),
+)
+
+MemoizedInput.displayName = "MemoizedInput"
+
+const ShareButtons = memo(
+  ({
+    totalHolidays,
+    onTwitterShare,
+    onFacebookShare,
+  }: {
+    totalHolidays: number
+    onTwitterShare: () => void
+    onFacebookShare: () => void
+  }) => (
+    <div className="flex gap-3 justify-center" role="group" aria-label="シェアボタン">
+      <Button
+        onClick={onTwitterShare}
+        className="bg-blue-500 hover:bg-blue-600"
+        aria-label={`Twitterで${totalHolidays}日の結果をシェア`}
+      >
+        <Share className="w-4 h-4 mr-2" aria-hidden="true" />
+        Twitterでシェア
+      </Button>
+      <Button
+        onClick={onFacebookShare}
+        className="bg-blue-700 hover:bg-blue-800"
+        aria-label={`Facebookで${totalHolidays}日の結果をシェア`}
+      >
+        <Share className="w-4 h-4 mr-2" aria-hidden="true" />
+        Facebookでシェア
+      </Button>
+    </div>
+  ),
+)
+
+ShareButtons.displayName = "ShareButtons"
 
 export default function HolidayCalculator() {
   const [workingDaysPerWeek, setWorkingDaysPerWeek] = useState("5")
@@ -71,11 +150,11 @@ export default function HolidayCalculator() {
   const fetchHolidays = useCallback(async () => {
     setIsLoadingHolidays(true)
     setHolidayError(false)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000) // 5秒でタイムアウト
+
     try {
       const currentYear = new Date().getFullYear()
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒でタイムアウト
-
       const response = await fetch(`https://holidays-jp.github.io/api/v1/${currentYear}/date.json`, {
         signal: controller.signal,
         mode: "cors",
@@ -84,30 +163,28 @@ export default function HolidayCalculator() {
         },
       })
 
-      clearTimeout(timeoutId)
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
       const holidaysData = await response.json()
 
-      let weekdayHolidays = 0
-      for (const dateString in holidaysData) {
+      const weekdayHolidays = Object.keys(holidaysData).reduce((count, dateString) => {
         const date = new Date(dateString)
         const dayOfWeek = date.getDay()
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-          weekdayHolidays++
-        }
-      }
+        return dayOfWeek !== 0 && dayOfWeek !== 6 ? count + 1 : count
+      }, 0)
 
       const validatedHolidays = Math.max(0, Math.min(50, weekdayHolidays))
       setNationalHolidays(validatedHolidays > 0 ? validatedHolidays.toString() : "14")
     } catch (error) {
-      console.error("祝日データの取得に失敗しました:", error)
-      setHolidayError(true)
-      setNationalHolidays("16") // 2025年の平日祝日数
+      if (error.name !== "AbortError") {
+        console.error("祝日データの取得に失敗しました:", error)
+        setHolidayError(true)
+        setNationalHolidays("16")
+      }
     } finally {
+      clearTimeout(timeoutId)
       setIsLoadingHolidays(false)
     }
   }, [])
@@ -116,7 +193,7 @@ export default function HolidayCalculator() {
     if (typeof window !== "undefined") {
       fetchHolidays()
     }
-  }, [])
+  }, [fetchHolidays])
 
   const shareOnTwitter = useCallback(() => {
     const sanitizedHolidays = Math.max(0, Math.min(365, totalHolidays))
@@ -140,21 +217,24 @@ export default function HolidayCalculator() {
     )
   }, [totalHolidays])
 
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    name: "年間休日計算ツール",
-    description: "勤務日数と各種休暇から年間の休日数を簡単に計算できる無料ツール",
-    url: typeof window !== "undefined" ? window.location.origin : "",
-    applicationCategory: "BusinessApplication",
-    operatingSystem: "Web Browser",
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "JPY",
-    },
-    featureList: ["年間休日計算", "祝日自動取得", "Twitterシェア", "Facebookシェア", "レスポンシブデザイン"],
-  }
+  const structuredData = useMemo(
+    () => ({
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      name: "年間休日計算ツール",
+      description: "勤務日数と各種休暇から年間の休日数を簡単に計算できる無料ツール",
+      url: typeof window !== "undefined" ? window.location.origin : "",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web Browser",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "JPY",
+      },
+      featureList: ["年間休日計算", "祝日自動取得", "Twitterシェア", "Facebookシェア", "レスポンシブデザイン"],
+    }),
+    [],
+  )
 
   return (
     <>
@@ -199,104 +279,70 @@ export default function HolidayCalculator() {
                     </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="national-holidays">祝日数</Label>
-                    <Input
-                      id="national-holidays"
-                      type="number"
-                      min="0"
-                      max="50"
-                      value={nationalHolidays}
-                      onChange={handleNumericInput(setNationalHolidays)}
-                      onKeyDown={(e) => handleKeyDown(e, "year-end-holidays")}
-                      className={`w-full ${!validateInput(nationalHolidays, 0, 50) ? "border-red-500" : ""}`}
-                      aria-describedby="national-holidays-help"
-                      aria-invalid={!validateInput(nationalHolidays, 0, 50)}
-                      aria-required="true"
-                    />
-                    <p id="national-holidays-help" className="text-xs text-gray-500">
-                      {isLoadingHolidays
+                  <MemoizedInput
+                    id="national-holidays"
+                    label="祝日数"
+                    value={nationalHolidays}
+                    onChange={handleNumericInput(setNationalHolidays)}
+                    onKeyDown={handleKeyDown}
+                    min="0"
+                    max="50"
+                    nextFieldId="year-end-holidays"
+                    helpText={
+                      isLoadingHolidays
                         ? "祝日データを取得中..."
                         : holidayError
                           ? "祝日データの取得に失敗しました。標準値（16日）を設定しています"
-                          : "今年の平日の祝日数が設定されています（土日重複分は除外済み）"}
-                    </p>
-                  </div>
+                          : "今年の平日の祝日数が設定されています（土日重複分は除外済み）"
+                    }
+                  />
 
-                  <div className="space-y-2">
-                    <Label htmlFor="year-end-holidays">年末年始休暇</Label>
-                    <Input
-                      id="year-end-holidays"
-                      type="number"
-                      min="0"
-                      max="20"
-                      value={yearEndHolidays}
-                      onChange={handleNumericInput(setYearEndHolidays)}
-                      onKeyDown={(e) => handleKeyDown(e, "summer-holidays")}
-                      className={`w-full ${!validateInput(yearEndHolidays, 0, 20) ? "border-red-500" : ""}`}
-                      aria-describedby="year-end-holidays-help"
-                      aria-invalid={!validateInput(yearEndHolidays, 0, 20)}
-                    />
-                    <p id="year-end-holidays-help" className="text-xs text-gray-500">
-                      12月29日～1月3日の場合は5日など（元旦を除く）
-                    </p>
-                  </div>
+                  <MemoizedInput
+                    id="year-end-holidays"
+                    label="年末年始休暇"
+                    value={yearEndHolidays}
+                    onChange={handleNumericInput(setYearEndHolidays)}
+                    onKeyDown={handleKeyDown}
+                    min="0"
+                    max="20"
+                    nextFieldId="summer-holidays"
+                    helpText="12月29日～1月3日の場合は5日など（元旦を除く）"
+                  />
 
-                  <div className="space-y-2">
-                    <Label htmlFor="summer-holidays">夏季休暇</Label>
-                    <Input
-                      id="summer-holidays"
-                      type="number"
-                      min="0"
-                      max="20"
-                      value={summerHolidays}
-                      onChange={handleNumericInput(setSummerHolidays)}
-                      onKeyDown={(e) => handleKeyDown(e, "special-holidays")}
-                      className={`w-full ${!validateInput(summerHolidays, 0, 20) ? "border-red-500" : ""}`}
-                      aria-describedby="summer-holidays-help"
-                      aria-invalid={!validateInput(summerHolidays, 0, 20)}
-                    />
-                    <p id="summer-holidays-help" className="text-xs text-gray-500">
-                      お盆期間などの夏季特別休暇（平均は3～4日）
-                    </p>
-                  </div>
+                  <MemoizedInput
+                    id="summer-holidays"
+                    label="夏季休暇"
+                    value={summerHolidays}
+                    onChange={handleNumericInput(setSummerHolidays)}
+                    onKeyDown={handleKeyDown}
+                    min="0"
+                    max="20"
+                    nextFieldId="special-holidays"
+                    helpText="お盆期間などの夏季特別休暇（平均は3～4日）"
+                  />
 
-                  <div className="space-y-2">
-                    <Label htmlFor="special-holidays">特別休暇</Label>
-                    <Input
-                      id="special-holidays"
-                      type="number"
-                      min="0"
-                      max="50"
-                      value={specialHolidays}
-                      onChange={handleNumericInput(setSpecialHolidays)}
-                      onKeyDown={(e) => handleKeyDown(e, "working-holidays")}
-                      className={`w-full ${!validateInput(specialHolidays, 0, 50) ? "border-red-500" : ""}`}
-                      aria-describedby="special-holidays-help"
-                      aria-invalid={!validateInput(specialHolidays, 0, 50)}
-                    />
-                    <p id="special-holidays-help" className="text-xs text-gray-500">
-                      創立記念日など、その他の特別休暇
-                    </p>
-                  </div>
+                  <MemoizedInput
+                    id="special-holidays"
+                    label="特別休暇"
+                    value={specialHolidays}
+                    onChange={handleNumericInput(setSpecialHolidays)}
+                    onKeyDown={handleKeyDown}
+                    min="0"
+                    max="50"
+                    nextFieldId="working-holidays"
+                    helpText="創立記念日など、その他の特別休暇"
+                  />
 
-                  <div className="space-y-2">
-                    <Label htmlFor="working-holidays">休日出勤日数</Label>
-                    <Input
-                      id="working-holidays"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={workingOnHolidays}
-                      onChange={handleNumericInput(setWorkingOnHolidays)}
-                      className={`w-full ${!validateInput(workingOnHolidays, 0, 100) ? "border-red-500" : ""}`}
-                      aria-describedby="working-holidays-help"
-                      aria-invalid={!validateInput(workingOnHolidays, 0, 100)}
-                    />
-                    <p id="working-holidays-help" className="text-xs text-gray-500">
-                      年間の休日出勤日数
-                    </p>
-                  </div>
+                  <MemoizedInput
+                    id="working-holidays"
+                    label="休日出勤日数"
+                    value={workingOnHolidays}
+                    onChange={handleNumericInput(setWorkingOnHolidays)}
+                    onKeyDown={handleKeyDown}
+                    min="0"
+                    max="100"
+                    helpText="年間の休日出勤日数"
+                  />
                 </CardContent>
               </Card>
             </form>
@@ -316,24 +362,11 @@ export default function HolidayCalculator() {
                       {totalHolidays}日
                     </div>
                     <p className="text-sm text-gray-600 mb-4">結果をシェアする:</p>
-                    <div className="flex gap-3 justify-center" role="group" aria-label="シェアボタン">
-                      <Button
-                        onClick={shareOnTwitter}
-                        className="bg-blue-500 hover:bg-blue-600"
-                        aria-label={`Twitterで${totalHolidays}日の結果をシェア`}
-                      >
-                        <Share className="w-4 h-4 mr-2" aria-hidden="true" />
-                        Twitterでシェア
-                      </Button>
-                      <Button
-                        onClick={shareOnFacebook}
-                        className="bg-blue-700 hover:bg-blue-800"
-                        aria-label={`Facebookで${totalHolidays}日の結果をシェア`}
-                      >
-                        <Share className="w-4 h-4 mr-2" aria-hidden="true" />
-                        Facebookでシェア
-                      </Button>
-                    </div>
+                    <ShareButtons
+                      totalHolidays={totalHolidays}
+                      onTwitterShare={shareOnTwitter}
+                      onFacebookShare={shareOnFacebook}
+                    />
                   </div>
                 </CardContent>
               </Card>
