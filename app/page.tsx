@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,6 +10,18 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar, Share } from "lucide-react"
 import Link from "next/link"
+
+const sanitizeNumericInput = (value: string): string => {
+  // 数値以外の文字を除去し、負の値を0に変換
+  const numericValue = Number.parseInt(value.replace(/[^0-9]/g, "")) || 0
+  // 最大値制限（年間365日を超えないように）
+  return Math.min(Math.max(numericValue, 0), 365).toString()
+}
+
+const validateInput = (value: string, min = 0, max = 365): boolean => {
+  const numValue = Number.parseInt(value)
+  return !isNaN(numValue) && numValue >= min && numValue <= max
+}
 
 export default function HolidayCalculator() {
   const [workingDaysPerWeek, setWorkingDaysPerWeek] = useState("5")
@@ -19,17 +33,29 @@ export default function HolidayCalculator() {
   const [isLoadingHolidays, setIsLoadingHolidays] = useState(false)
   const [holidayError, setHolidayError] = useState(false)
 
-  const totalHolidays = useMemo(() => {
-    const workDays = Number.parseInt(workingDaysPerWeek)
-    const weekendsPerYear = (7 - workDays) * 52
-    const holidays =
-      Number.parseInt(nationalHolidays) +
-      Number.parseInt(yearEndHolidays) +
-      Number.parseInt(summerHolidays) +
-      Number.parseInt(specialHolidays)
-    const workingOnHolidaysDays = Number.parseInt(workingOnHolidays)
+  const handleNumericInput = useCallback((setter: (value: string) => void) => {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      const sanitizedValue = sanitizeNumericInput(e.target.value)
+      setter(sanitizedValue)
+    }
+  }, [])
 
-    return weekendsPerYear + holidays - workingOnHolidaysDays
+  const totalHolidays = useMemo(() => {
+    const workDays = Math.max(1, Math.min(7, Number.parseInt(workingDaysPerWeek) || 5))
+    const weekendsPerYear = (7 - workDays) * 52
+
+    const validatedNationalHolidays = Math.max(0, Math.min(50, Number.parseInt(nationalHolidays) || 0))
+    const validatedYearEndHolidays = Math.max(0, Math.min(20, Number.parseInt(yearEndHolidays) || 0))
+    const validatedSummerHolidays = Math.max(0, Math.min(20, Number.parseInt(summerHolidays) || 0))
+    const validatedSpecialHolidays = Math.max(0, Math.min(50, Number.parseInt(specialHolidays) || 0))
+    const validatedWorkingOnHolidays = Math.max(0, Math.min(100, Number.parseInt(workingOnHolidays) || 0))
+
+    const holidays =
+      validatedNationalHolidays + validatedYearEndHolidays + validatedSummerHolidays + validatedSpecialHolidays
+    const totalCalculated = weekendsPerYear + holidays - validatedWorkingOnHolidays
+
+    // 結果が負の値にならないように制限
+    return Math.max(0, Math.min(365, totalCalculated))
   }, [workingDaysPerWeek, nationalHolidays, yearEndHolidays, summerHolidays, specialHolidays, workingOnHolidays])
 
   const fetchHolidays = useCallback(async () => {
@@ -65,7 +91,8 @@ export default function HolidayCalculator() {
         }
       }
 
-      setNationalHolidays(weekdayHolidays > 0 ? weekdayHolidays.toString() : "14")
+      const validatedHolidays = Math.max(0, Math.min(50, weekdayHolidays))
+      setNationalHolidays(validatedHolidays > 0 ? validatedHolidays.toString() : "14")
     } catch (error) {
       console.error("祝日データの取得に失敗しました:", error)
       setHolidayError(true)
@@ -82,20 +109,24 @@ export default function HolidayCalculator() {
   }, [])
 
   const shareOnTwitter = useCallback(() => {
-    const text = `私の年間休日数は${totalHolidays}日でした！\n#年間休日計算ツール\n`
+    const sanitizedHolidays = Math.max(0, Math.min(365, totalHolidays))
+    const text = `私の年間休日数は${sanitizedHolidays}日でした！\n#年間休日計算ツール\n`
     const url = window.location.href
     window.open(
       `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
       "_blank",
+      "noopener,noreferrer",
     )
   }, [totalHolidays])
 
   const shareOnFacebook = useCallback(() => {
-    const text = `私の年間休日数は${totalHolidays}日でした！`
+    const sanitizedHolidays = Math.max(0, Math.min(365, totalHolidays))
+    const text = `私の年間休日数は${sanitizedHolidays}日でした！`
     const url = window.location.href
     window.open(
       `https://www.facebook.com/dialog/share?app_id=966242223397117&href=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}&hashtag=${encodeURIComponent("#年間休日計算ツール")}`,
       "_blank",
+      "noopener,noreferrer",
     )
   }, [totalHolidays])
 
@@ -155,9 +186,11 @@ export default function HolidayCalculator() {
                   <Input
                     id="national-holidays"
                     type="number"
+                    min="0"
+                    max="50"
                     value={nationalHolidays}
-                    onChange={(e) => setNationalHolidays(e.target.value)}
-                    className="w-full"
+                    onChange={handleNumericInput(setNationalHolidays)}
+                    className={`w-full ${!validateInput(nationalHolidays, 0, 50) ? "border-red-500" : ""}`}
                     aria-describedby="national-holidays-help"
                   />
                   <p id="national-holidays-help" className="text-xs text-gray-500">
@@ -174,9 +207,11 @@ export default function HolidayCalculator() {
                   <Input
                     id="year-end-holidays"
                     type="number"
+                    min="0"
+                    max="20"
                     value={yearEndHolidays}
-                    onChange={(e) => setYearEndHolidays(e.target.value)}
-                    className="w-full"
+                    onChange={handleNumericInput(setYearEndHolidays)}
+                    className={`w-full ${!validateInput(yearEndHolidays, 0, 20) ? "border-red-500" : ""}`}
                     aria-describedby="year-end-holidays-help"
                   />
                   <p id="year-end-holidays-help" className="text-xs text-gray-500">
@@ -189,9 +224,11 @@ export default function HolidayCalculator() {
                   <Input
                     id="summer-holidays"
                     type="number"
+                    min="0"
+                    max="20"
                     value={summerHolidays}
-                    onChange={(e) => setSummerHolidays(e.target.value)}
-                    className="w-full"
+                    onChange={handleNumericInput(setSummerHolidays)}
+                    className={`w-full ${!validateInput(summerHolidays, 0, 20) ? "border-red-500" : ""}`}
                     aria-describedby="summer-holidays-help"
                   />
                   <p id="summer-holidays-help" className="text-xs text-gray-500">
@@ -204,9 +241,11 @@ export default function HolidayCalculator() {
                   <Input
                     id="special-holidays"
                     type="number"
+                    min="0"
+                    max="50"
                     value={specialHolidays}
-                    onChange={(e) => setSpecialHolidays(e.target.value)}
-                    className="w-full"
+                    onChange={handleNumericInput(setSpecialHolidays)}
+                    className={`w-full ${!validateInput(specialHolidays, 0, 50) ? "border-red-500" : ""}`}
                     aria-describedby="special-holidays-help"
                   />
                   <p id="special-holidays-help" className="text-xs text-gray-500">
@@ -219,9 +258,11 @@ export default function HolidayCalculator() {
                   <Input
                     id="working-holidays"
                     type="number"
+                    min="0"
+                    max="100"
                     value={workingOnHolidays}
-                    onChange={(e) => setWorkingOnHolidays(e.target.value)}
-                    className="w-full"
+                    onChange={handleNumericInput(setWorkingOnHolidays)}
+                    className={`w-full ${!validateInput(workingOnHolidays, 0, 100) ? "border-red-500" : ""}`}
                     aria-describedby="working-holidays-help"
                   />
                   <p id="working-holidays-help" className="text-xs text-gray-500">
