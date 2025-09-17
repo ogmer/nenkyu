@@ -17,7 +17,7 @@ export default function AboutPage() {
               <div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-3">年間休日計算ツールとは</h3>
                 <p className="text-gray-700 leading-relaxed">
-                  このツールは、勤務日数と各種休日から年間の休日数を簡単に計算できるWebアプリケーションです。企業の年間休日数の確認や、転職先の休日数の比較などにご活用いただけます。
+                  このツールは、勤務日数と各種休日から年間の休日数を簡単に計算できるWebアプリケーションです。企業の年間休日数の目安の確認や、転職先の休日数の比較などにご活用いただけます。
                 </p>
               </div>
 
