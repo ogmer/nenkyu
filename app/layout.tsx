@@ -1,7 +1,13 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
+import { Noto_Sans_JP } from "next/font/google"
 import "./globals.css"
+
+const notoSansJP = Noto_Sans_JP({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "年間休日計算ツール | 勤務日数から年間休日数を自動計算",
@@ -51,17 +57,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ja" className={GeistSans.variable}>
-      <head>
-        <link
-          rel="preload"
-          href="/_next/static/media/geist-sans.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
-      </head>
-
+    <html lang="ja" className={notoSansJP.variable}>
       <body className="font-sans antialiased">{children}</body>
     </html>
   )
