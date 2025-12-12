@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Noto_Sans_JP } from "next/font/google"
+import Script from "next/script"
 import "./globals.css"
 
 const notoSansJP = Noto_Sans_JP({
@@ -58,6 +59,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" className={notoSansJP.variable}>
+      <head>
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-NNRS9GPGQX" strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-NNRS9GPGQX');
+          `}
+        </Script>
+      </head>
       <body className="font-sans antialiased">{children}</body>
     </html>
   )
