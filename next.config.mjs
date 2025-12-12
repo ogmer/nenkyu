@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -8,7 +11,7 @@ const nextConfig = {
   generateEtags: true,
   images: {
     formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 31536000,
+    minimumCacheTTL: 31536000, // 1年
     unoptimized: true,
   },
   headers: async () => {

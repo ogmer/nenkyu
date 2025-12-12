@@ -1,12 +1,14 @@
 "use client"
 
 import type React from "react"
-
-import Link from "next/link"
+import { memo } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Share } from "lucide-react"
+import Link from "next/link"
 import { fetchHolidaysData } from "./actions/holidays"
 import HolidayCalculatorClient from "@/components/HolidayCalculatorClient"
-import { memo } from "react"
 
 const sanitizeNumericInput = (value: string): string => {
   // 数値以外の文字を除去し、負の値を0に変換
@@ -43,8 +45,8 @@ const MemoizedInput = memo(
     nextFieldId?: string
   }) => (
     <div className="space-y-2">
-      <label htmlFor={id}>{label}</label>
-      <input
+      <Label htmlFor={id}>{label}</Label>
+      <Input
         id={id}
         type="number"
         min={min}
@@ -82,9 +84,7 @@ const ShareButtons = memo(
         className="bg-blue-500 hover:bg-blue-600"
         aria-label={`Twitterで${totalHolidays}日の結果をシェア`}
       >
-        <svg className="w-4 h-4 mr-2" aria-hidden="true">
-          {/* Twitter icon SVG here */}
-        </svg>
+        <Share className="w-4 h-4 mr-2" aria-hidden="true" />
         Twitterでシェア
       </Button>
       <Button
@@ -92,9 +92,7 @@ const ShareButtons = memo(
         className="bg-blue-700 hover:bg-blue-800"
         aria-label={`Facebookで${totalHolidays}日の結果をシェア`}
       >
-        <svg className="w-4 h-4 mr-2" aria-hidden="true">
-          {/* Facebook icon SVG here */}
-        </svg>
+        <Share className="w-4 h-4 mr-2" aria-hidden="true" />
         Facebookでシェア
       </Button>
     </div>
