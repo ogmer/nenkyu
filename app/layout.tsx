@@ -50,6 +50,9 @@ export const metadata: Metadata = {
     icon: [{ url: "/favicon.png", type: "image/png", sizes: "32x32" }],
     apple: [{ url: "/favicon.png", sizes: "32x32", type: "image/png" }],
   },
+  verification: {
+    google: "QnUsOtyQqqGQspitKoNedHKpBusxYT0S5xXnYFT-8u8",
+  },
     generator: 'v0.app'
 }
 
