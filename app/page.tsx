@@ -236,6 +236,8 @@ export default function HolidayCalculator() {
     [],
   )
 
+  const currentYear = useMemo(() => new Date().getFullYear(), [])
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
@@ -391,7 +393,7 @@ export default function HolidayCalculator() {
           </main>
 
           <footer className="text-center text-sm text-gray-500 mt-8" role="contentinfo">
-            © 2025 年間休日計算ツール
+            © {currentYear} 年間休日計算ツール
           </footer>
         </div>
       </div>

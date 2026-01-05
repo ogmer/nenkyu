@@ -2,6 +2,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
 export default function AboutPage() {
+  const currentYear = new Date().getFullYear()
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -60,7 +62,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-        <footer className="text-center text-sm text-gray-500 mt-12">© 2025 年間休日計算ツール</footer>
+        <footer className="text-center text-sm text-gray-500 mt-12">© {currentYear} 年間休日計算ツール</footer>
       </div>
     </div>
   )
