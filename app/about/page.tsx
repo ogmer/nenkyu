@@ -55,6 +55,21 @@ export default function AboutPage() {
             </div>
           </section>
 
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">こちらのサイトもおすすめです</h2>
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <a
+                href="https://kyuyo.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 underline text-lg"
+              >
+                給与明細作成ツール
+              </a>
+              <p className="text-gray-600 mt-2">給与明細の作成に便利なツールです。</p>
+            </div>
+          </section>
+
           <div className="text-center pt-8">
             <Link href="/">
               <Button className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2">計算ツールに戻る</Button>
