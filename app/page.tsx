@@ -245,7 +245,7 @@ export default function HolidayCalculator() {
         <div className="max-w-2xl mx-auto">
           <header className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">年間休日計算ツール</h1>
-            <p className="text-gray-600">勤務日数と休日から年間の休日数を簡単に計算できます</p>
+
           </header>
 
           <main>
