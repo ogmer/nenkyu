@@ -393,8 +393,7 @@ export default function HolidayCalculator() {
           </main>
 
           <footer className="text-center text-sm text-gray-500 mt-8" role="contentinfo">
-            <p>© {currentYear} 年間休日計算ツール</p>
-            <p className="mt-2 text-xs text-gray-400">※ 何日だからホワイトという基準は明確にはありませんのでご了承ください。</p>
+            © {currentYear} 年間休日計算ツール
           </footer>
         </div>
       </div>
