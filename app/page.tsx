@@ -244,8 +244,8 @@ export default function HolidayCalculator() {
       <div className="min-h-screen bg-gray-50 py-8 px-4" role="application" aria-label="年間休日計算ツール">
         <div className="max-w-2xl mx-auto">
           <header className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">年間休日 計算ツール</h1>
-
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">年間休日計算ツール</h1>
+            <p className="text-gray-600">勤務日数と休日から年間の休日数を簡単に計算できます</p>
           </header>
 
           <main>
@@ -377,6 +377,7 @@ export default function HolidayCalculator() {
             <aside className="text-xs text-gray-500 space-y-1 mb-8" role="note" aria-label="計算に関する注意事項">
               <p>※ この計算は簡易的なものです。祝日が週末と重なる場合や、振替休日などは考慮していません。</p>
               <p>※ より正確な計算には、実際のカレンダーを参照してください。</p>
+              <p>※ 何日だからホワイトという基準は明確にはありませんのでご了承ください。</p>
             </aside>
 
             <nav className="text-center" aria-label="関連ページへのナビゲーション">
