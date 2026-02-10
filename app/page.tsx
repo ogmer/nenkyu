@@ -377,7 +377,6 @@ export default function HolidayCalculator() {
             <aside className="text-xs text-gray-500 space-y-1 mb-8" role="note" aria-label="計算に関する注意事項">
               <p>※ この計算は簡易的なものです。祝日が週末と重なる場合や、振替休日などは考慮していません。</p>
               <p>※ より正確な計算には、実際のカレンダーを参照してください。</p>
-              <p>※ 何日だからホワイトという基準は明確にはありませんのでご了承ください。</p>
             </aside>
 
             <nav className="text-center" aria-label="関連ページへのナビゲーション">
