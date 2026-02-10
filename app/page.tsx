@@ -244,7 +244,7 @@ export default function HolidayCalculator() {
       <div className="min-h-screen bg-gray-50 py-8 px-4" role="application" aria-label="年間休日計算ツール">
         <div className="max-w-2xl mx-auto">
           <header className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">年間休日計算ツール</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">年間休日 計算ツール</h1>
 
           </header>
 
@@ -393,7 +393,8 @@ export default function HolidayCalculator() {
           </main>
 
           <footer className="text-center text-sm text-gray-500 mt-8" role="contentinfo">
-            © {currentYear} 年間休日計算ツール
+            <p>© {currentYear} 年間休日計算ツール</p>
+            <p className="mt-2 text-xs text-gray-400">※ 何日だからホワイトという基準は明確にはありませんのでご了承ください。</p>
           </footer>
         </div>
       </div>
