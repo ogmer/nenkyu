@@ -12,13 +12,11 @@ const CSP = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
 ].join("; ")
 
 export function middleware(request: NextRequest) {
   const response = NextResponse.next()
 
-  response.headers.set("X-Frame-Options", "DENY")
   response.headers.set("X-Content-Type-Options", "nosniff")
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
   response.headers.set("X-XSS-Protection", "1; mode=block")
