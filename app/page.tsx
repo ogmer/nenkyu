@@ -326,7 +326,7 @@ export default function HolidayCalculator() {
                     onKeyDown={handleKeyDown}
                     min="0"
                     max="100"
-                    helpText="年間の休日出勤日数"
+                    helpText="年間の休日出勤日数(マイナス)"
                   />
                 </CardContent>
               </Card>
