@@ -192,23 +192,34 @@ export default function HolidayCalculator() {
     }
   }, [])
 
+  const openShareUrl = useCallback((url: string) => {
+    // アンカー要素経由で開くことで、モバイルブラウザのポップアップブロックを回避する
+    const anchor = document.createElement("a")
+    anchor.href = url
+    anchor.target = "_blank"
+    anchor.rel = "noopener noreferrer"
+    document.body.appendChild(anchor)
+    anchor.click()
+    document.body.removeChild(anchor)
+  }, [])
+
   const shareOnTwitter = useCallback(() => {
     const text = `私の年間休日数は${totalHolidays}日でした！\n#年間休日計算ツール\n`
-    window.open(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`,
-      "_blank",
-      "noopener,noreferrer",
-    )
-  }, [totalHolidays])
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      navigator
+        .share({ text, url: window.location.href })
+        .catch(() => openShareUrl(shareUrl))
+      return
+    }
+    openShareUrl(shareUrl)
+  }, [totalHolidays, openShareUrl])
 
   const shareOnFacebook = useCallback(() => {
-    const text = `私の年間休日数は${totalHolidays}日でした！`
-    window.open(
-      `https://www.facebook.com/dialog/share?app_id=966242223397117&href=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(text)}&hashtag=${encodeURIComponent("#年間休日計算ツール")}`,
-      "_blank",
-      "noopener,noreferrer",
-    )
-  }, [totalHolidays])
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(`私の年間休日数は${totalHolidays}日でした！`)}`
+    openShareUrl(shareUrl)
+  }, [totalHolidays, openShareUrl])
 
   return (
     <>
