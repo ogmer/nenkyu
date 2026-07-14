@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect, useMemo, useCallback, memo } from "react"
+import { useState, useMemo, useCallback, memo, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,10 +11,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, Share } from "lucide-react"
 import Link from "next/link"
 
+const CURRENT_YEAR = new Date().getFullYear()
+
+const STRUCTURED_DATA = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "年間休日計算ツール",
+  description: "勤務日数と各種休暇から年間の休日数を簡単に計算できる無料ツール",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web Browser",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "JPY" },
+  featureList: ["年間休日計算", "祝日自動取得", "Twitterシェア", "Facebookシェア", "レスポンシブデザイン"],
+})
+
+// 今年の平日の祝日数を取得（土日と重なる祝日は除外）
+const fetchWeekdayHolidayCount = async (): Promise<number> => {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 3000)
+
+  try {
+    const res = await fetch(`https://holidays-jp.github.io/api/v1/${CURRENT_YEAR}/date.json`, {
+      signal: controller.signal,
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data: Record<string, string> = await res.json()
+
+    const weekdayHolidays = Object.keys(data).reduce((count, dateStr) => {
+      const day = new Date(dateStr).getDay()
+      return day !== 0 && day !== 6 ? count + 1 : count
+    }, 0)
+
+    return weekdayHolidays > 0 ? Math.min(50, weekdayHolidays) : 14
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
 const sanitizeNumericInput = (value: string): string => {
-  // 数値以外の文字を除去し、負の値を0に変換
   const numericValue = Number.parseInt(value.replace(/[^0-9]/g, "")) || 0
-  // 最大値制限（年間365日を超えないように）
   return Math.min(Math.max(numericValue, 0), 365).toString()
 }
 
@@ -44,27 +78,33 @@ const MemoizedInput = memo(
     helpText: string
     label: string
     nextFieldId?: string
-  }) => (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        type="number"
-        min={min}
-        max={max}
-        value={value}
-        onChange={onChange}
-        onKeyDown={(e) => onKeyDown(e, nextFieldId)}
-        className={`w-full ${!validateInput(value, Number.parseInt(min), Number.parseInt(max)) ? "border-red-500" : ""}`}
-        aria-describedby={`${id}-help`}
-        aria-invalid={!validateInput(value, Number.parseInt(min), Number.parseInt(max))}
-        aria-required={id === "national-holidays"}
-      />
-      <p id={`${id}-help`} className="text-xs text-gray-500">
-        {helpText}
-      </p>
-    </div>
-  ),
+  }) => {
+    const minNum = Number.parseInt(min)
+    const maxNum = Number.parseInt(max)
+    const isValid = validateInput(value, minNum, maxNum)
+    return (
+      <div className="space-y-2">
+        <Label htmlFor={id}>{label}</Label>
+        <Input
+          id={id}
+          type="number"
+          inputMode="numeric"
+          min={min}
+          max={max}
+          value={value}
+          onChange={onChange}
+          onKeyDown={(e) => onKeyDown(e, nextFieldId)}
+          className={`w-full ${!isValid ? "border-red-500" : ""}`}
+          aria-describedby={`${id}-help`}
+          aria-invalid={!isValid}
+          aria-required={id === "national-holidays"}
+        />
+        <p id={`${id}-help`} className="text-xs text-gray-500">
+          {helpText}
+        </p>
+      </div>
+    )
+  },
 )
 
 MemoizedInput.displayName = "MemoizedInput"
@@ -109,138 +149,85 @@ export default function HolidayCalculator() {
   const [summerHolidays, setSummerHolidays] = useState("3")
   const [specialHolidays, setSpecialHolidays] = useState("0")
   const [workingOnHolidays, setWorkingOnHolidays] = useState("0")
-  const [isLoadingHolidays, setIsLoadingHolidays] = useState(false)
-  const [holidayError, setHolidayError] = useState(false)
+
+  const {
+    data: fetchedHolidayCount,
+    isLoading: isLoadingHolidays,
+    isError: holidayError,
+  } = useQuery({
+    queryKey: ["weekday-holidays", CURRENT_YEAR],
+    queryFn: fetchWeekdayHolidayCount,
+  })
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent, nextFieldId?: string) => {
     if (e.key === "Enter" && nextFieldId) {
       e.preventDefault()
-      const nextField = document.getElementById(nextFieldId)
-      if (nextField) {
-        nextField.focus()
-      }
+      document.getElementById(nextFieldId)?.focus()
     }
   }, [])
 
   const handleNumericInput = useCallback((setter: (value: string) => void) => {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
-      const sanitizedValue = sanitizeNumericInput(e.target.value)
-      setter(sanitizedValue)
+      setter(sanitizeNumericInput(e.target.value))
     }
   }, [])
 
   const totalHolidays = useMemo(() => {
     const workDays = Math.max(1, Math.min(7, Number.parseInt(workingDaysPerWeek) || 5))
     const weekendsPerYear = (7 - workDays) * 52
-
-    const validatedNationalHolidays = Math.max(0, Math.min(50, Number.parseInt(nationalHolidays) || 0))
-    const validatedYearEndHolidays = Math.max(0, Math.min(20, Number.parseInt(yearEndHolidays) || 0))
-    const validatedSummerHolidays = Math.max(0, Math.min(20, Number.parseInt(summerHolidays) || 0))
-    const validatedSpecialHolidays = Math.max(0, Math.min(50, Number.parseInt(specialHolidays) || 0))
-    const validatedWorkingOnHolidays = Math.max(0, Math.min(100, Number.parseInt(workingOnHolidays) || 0))
-
     const holidays =
-      validatedNationalHolidays + validatedYearEndHolidays + validatedSummerHolidays + validatedSpecialHolidays
-    const totalCalculated = weekendsPerYear + holidays - validatedWorkingOnHolidays
-
-    // 結果が負の値にならないように制限
-    return Math.max(0, Math.min(365, totalCalculated))
+      Math.max(0, Math.min(50, Number.parseInt(nationalHolidays) || 0)) +
+      Math.max(0, Math.min(20, Number.parseInt(yearEndHolidays) || 0)) +
+      Math.max(0, Math.min(20, Number.parseInt(summerHolidays) || 0)) +
+      Math.max(0, Math.min(50, Number.parseInt(specialHolidays) || 0))
+    return Math.max(0, Math.min(365, weekendsPerYear + holidays - Math.max(0, Math.min(100, Number.parseInt(workingOnHolidays) || 0))))
   }, [workingDaysPerWeek, nationalHolidays, yearEndHolidays, summerHolidays, specialHolidays, workingOnHolidays])
 
-  const fetchHolidays = useCallback(async () => {
-    setIsLoadingHolidays(true)
-    setHolidayError(false)
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 5000) // 5秒でタイムアウト
-
-    try {
-      const currentYear = new Date().getFullYear()
-      const response = await fetch(`https://holidays-jp.github.io/api/v1/${currentYear}/date.json`, {
-        signal: controller.signal,
-        mode: "cors",
-        headers: {
-          Accept: "application/json",
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const holidaysData = await response.json()
-
-      const weekdayHolidays = Object.keys(holidaysData).reduce((count, dateString) => {
-        const date = new Date(dateString)
-        const dayOfWeek = date.getDay()
-        return dayOfWeek !== 0 && dayOfWeek !== 6 ? count + 1 : count
-      }, 0)
-
-      const validatedHolidays = Math.max(0, Math.min(50, weekdayHolidays))
-      setNationalHolidays(validatedHolidays > 0 ? validatedHolidays.toString() : "14")
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        console.error("祝日データの取得に失敗しました:", error)
-        setHolidayError(true)
-        setNationalHolidays("16")
-      }
-    } finally {
-      clearTimeout(timeoutId)
-      setIsLoadingHolidays(false)
+  // TanStack Queryの取得結果を入力欄へ反映（取得成功時のみ・ユーザー編集は上書きしない）
+  useEffect(() => {
+    if (fetchedHolidayCount !== undefined) {
+      setNationalHolidays(fetchedHolidayCount.toString())
     }
-  }, [])
+  }, [fetchedHolidayCount])
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      fetchHolidays()
+    if (holidayError) {
+      setNationalHolidays("16")
     }
-  }, [fetchHolidays])
+  }, [holidayError])
+
+  const openShareUrl = useCallback((url: string) => {
+    // アンカー要素経由で開くことで、モバイルブラウザのポップアップブロックを回避する
+    const anchor = document.createElement("a")
+    anchor.href = url
+    anchor.target = "_blank"
+    anchor.rel = "noopener noreferrer"
+    document.body.appendChild(anchor)
+    anchor.click()
+    document.body.removeChild(anchor)
+  }, [])
 
   const shareOnTwitter = useCallback(() => {
-    const sanitizedHolidays = Math.max(0, Math.min(365, totalHolidays))
-    const text = `私の年間休日数は${sanitizedHolidays}日でした！\n#年間休日計算ツール\n`
-    const url = window.location.href
-    window.open(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-      "_blank",
-      "noopener,noreferrer",
-    )
-  }, [totalHolidays])
+    const text = `私の年間休日数は${totalHolidays}日でした！\n#年間休日計算ツール\n`
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      navigator
+        .share({ text, url: window.location.href })
+        .catch(() => openShareUrl(shareUrl))
+      return
+    }
+    openShareUrl(shareUrl)
+  }, [totalHolidays, openShareUrl])
 
   const shareOnFacebook = useCallback(() => {
-    const sanitizedHolidays = Math.max(0, Math.min(365, totalHolidays))
-    const text = `私の年間休日数は${sanitizedHolidays}日でした！`
-    const url = window.location.href
-    window.open(
-      `https://www.facebook.com/dialog/share?app_id=966242223397117&href=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}&hashtag=${encodeURIComponent("#年間休日計算ツール")}`,
-      "_blank",
-      "noopener,noreferrer",
-    )
-  }, [totalHolidays])
-
-  const structuredData = useMemo(
-    () => ({
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      name: "年間休日計算ツール",
-      description: "勤務日数と各種休暇から年間の休日数を簡単に計算できる無料ツール",
-      url: typeof window !== "undefined" ? window.location.origin : "",
-      applicationCategory: "BusinessApplication",
-      operatingSystem: "Web Browser",
-      offers: {
-        "@type": "Offer",
-        price: "0",
-        priceCurrency: "JPY",
-      },
-      featureList: ["年間休日計算", "祝日自動取得", "Twitterシェア", "Facebookシェア", "レスポンシブデザイン"],
-    }),
-    [],
-  )
-
-  const currentYear = useMemo(() => new Date().getFullYear(), [])
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(`私の年間休日数は${totalHolidays}日でした！`)}`
+    openShareUrl(shareUrl)
+  }, [totalHolidays, openShareUrl])
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: STRUCTURED_DATA }} />
       <div className="min-h-screen bg-gray-50 py-8 px-4" role="application" aria-label="年間休日計算ツール">
         <div className="max-w-2xl mx-auto">
           <header className="text-center mb-8">
@@ -343,7 +330,7 @@ export default function HolidayCalculator() {
                     onKeyDown={handleKeyDown}
                     min="0"
                     max="100"
-                    helpText="年間の休日出勤日数"
+                    helpText="年間の休日出勤日数(マイナス)"
                   />
                 </CardContent>
               </Card>
@@ -393,7 +380,7 @@ export default function HolidayCalculator() {
           </main>
 
           <footer className="text-center text-sm text-gray-500 mt-8" role="contentinfo">
-            © {currentYear} 年間休日計算ツール
+            © {CURRENT_YEAR} 年間休日計算ツール
           </footer>
         </div>
       </div>

@@ -1,15 +1,24 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Noto_Sans_JP } from "next/font/google"
 import Script from "next/script"
 import { Analytics } from "@vercel/analytics/next"
+import { Providers } from "@/components/providers"
 import "./globals.css"
 
 const notoSansJP = Noto_Sans_JP({
   subsets: ["latin"],
+  weight: ["400", "700"],
   variable: "--font-sans",
   display: "swap",
+  preload: true,
 })
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#3b82f6",
+}
 
 export const metadata: Metadata = {
   title: "年間休日計算ツール | 勤務日数から年間休日数を自動計算",
@@ -63,17 +72,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" className={notoSansJP.variable}>
+      <head>
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://holidays-jp.github.io" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
+      </head>
       <body className="font-sans antialiased">
-        <Script src="https://www.googletagmanager.com/gtag/js?id=G-NNRS9GPGQX" strategy="afterInteractive" />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-NNRS9GPGQX');
-          `}
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-NNRS9GPGQX" strategy="lazyOnload" />
+        <Script id="google-analytics" strategy="lazyOnload">
+          {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-NNRS9GPGQX');`}
         </Script>
-        {children}
+        <Providers>{children}</Providers>
         <Analytics />
       </body>
     </html>
